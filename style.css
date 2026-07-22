@@ -234,13 +234,20 @@ input, select, textarea, button {
 .brand-logo {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: var(--color-white);
+    background: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: var(--border-radius-md);
-    font-size: 20px;
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
 }
 
 .brand-name {
@@ -1053,6 +1060,11 @@ textarea.form-control {
 /* ==========================================
    PRINT STYLES & RECEIPT GRAPHICS
    ========================================== */
+.receipt-preview-body {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
 .receipt-print-area {
     background-color: var(--color-white);
     color: #000;
@@ -1377,6 +1389,11 @@ textarea.form-control {
         background: #fff !important;
     }
     
+    .receipt-preview-body {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+    
     .receipt-print-area {
         padding: 2mm 6mm !important;
         border: none !important;
@@ -1517,15 +1534,22 @@ textarea.form-control {
 .login-logo {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: var(--color-white);
+    background: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: var(--border-radius-md);
-    font-size: 32px;
     margin: 0 auto 16px auto;
     box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.login-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
 }
 
 .login-app-name {

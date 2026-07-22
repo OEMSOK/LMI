@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMI - ប្រព័ន្ធគ្រប់គ្រងការចងការប្រាក់ (LMI Loan System)</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <!-- Google Fonts for premium typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +21,7 @@
         <div class="login-card animate-up">
             <div class="login-brand">
                 <div class="login-logo">
-                    <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                    <img src="logo.png" alt="LMI Logo">
                 </div>
                 <h1 class="login-app-name">LMI SYSTEM</h1>
                 <p class="login-subtitle">ប្រព័ន្ធគ្រប់គ្រងការចងការប្រាក់</p>
@@ -60,7 +61,7 @@
         <aside class="app-sidebar">
             <div class="sidebar-header">
                 <div class="brand-logo">
-                    <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                    <img src="logo.png" alt="LMI Logo">
                 </div>
                 <div class="brand-info">
                     <h1 class="brand-name">LMI SYSTEM</h1>
@@ -795,77 +796,88 @@
     <!-- 3. PRINT RECEIPT / INVOICE MODAL -->
     <div id="printReceiptModal" class="modal-container d-none">
         <div class="modal-card max-width-600 print-card">
-            <!-- Receipt Content (This part is styled for print) -->
-            <div class="receipt-print-area" id="receiptPrintArea">
-                <div class="receipt-header">
-                    <h2 class="receipt-shop-name">សេវាចងការប្រាក់ LMI</h2>
-                    <p class="receipt-owner-info">សុខ ស៊ីណេត Tel: 0975003990</p>
-                    <p class="receipt-address-info">ផ្លូវកែងទៅច្រេស ភូមិព្រៃម្នាស់ ឃុំសំឡី ស្រុកកំពង់រោទិ៍ ខេត្តស្វាយរៀង</p>
+            <div class="modal-header no-print">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-print text-primary"></i> 
+                    <span data-translate="modal_print_title">មើលការបង្ហាញបោះពុម្ភវិក្កយបត្រ</span>
+                </h3>
+                <button class="btn-close-modal" onclick="closeModal('printReceiptModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Scrollable wrapper for screen preview -->
+            <div class="receipt-preview-body">
+                <!-- Receipt Content (This part is styled for print) -->
+                <div class="receipt-print-area" id="receiptPrintArea">
+                    <div class="receipt-header">
+                        <h2 class="receipt-shop-name">សេវាចងការប្រាក់ LMI</h2>
+                        <p class="receipt-owner-info">សុខ ស៊ីណេត Tel: 0975003990</p>
+                        <p class="receipt-address-info">ផ្លូវកែងទៅច្រេស ភូមិព្រៃម្នាស់ ឃុំសំឡី ស្រុកកំពង់រោទិ៍ ខេត្តស្វាយរៀង</p>
+                        <hr class="receipt-dashed-line">
+                        <h3 class="receipt-title" data-translate="receipt_headline">វិក្កយបត្រព័ត៌មានឥណទាន</h3>
+                    </div>
+
+                    <div class="receipt-details">
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_id">លេខសម្គាល់៖</span>
+                            <span class="value font-bold" id="pReceiptId">LMI-0001</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_name">ឈ្មោះអតិថិជន៖</span>
+                            <span class="value font-bold" id="pReceiptName">មាស សុខា</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_phone">លេខទូរសព្ទ៖</span>
+                            <span class="value" id="pReceiptPhone">010 888 999</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_village">អាសយដ្ឋានភូមិ៖</span>
+                            <span class="value" id="pReceiptVillage">ព្រៃម្នាស់</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_date">ថ្ងៃខែឆ្នាំចងការ៖</span>
+                            <span class="value" id="pReceiptDate">10-07-2026</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="tbl_collateral">វត្ថុបញ្ចាំ៖</span>
+                            <span class="value" id="pReceiptCollateral">មាន (ប្លង់ដី)</span>
+                        </div>
+                    </div>
+
                     <hr class="receipt-dashed-line">
-                    <h3 class="receipt-title" data-translate="receipt_headline">វិក្កយបត្រព័ត៌មានឥណទាន</h3>
-                </div>
 
-                <div class="receipt-details">
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_id">លេខសម្គាល់៖</span>
-                        <span class="value font-bold" id="pReceiptId">LMI-0001</span>
+                    <div class="receipt-financials">
+                        <div class="receipt-row large">
+                            <span class="label" data-translate="lbl_loan_capital">ប្រាក់ចងការសរុប៖</span>
+                            <span class="value font-bold text-large" id="pReceiptCapital">$1,000.00</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="label" data-translate="lbl_interest_rate_monthly">ការប្រាក់ក្នុង១ខែ៖</span>
+                            <span class="value" id="pReceiptRate">5%</span>
+                        </div>
+                        <div class="receipt-row highlight">
+                            <span class="label" data-translate="lbl_interest_amount_monthly">ការប្រាក់ត្រូវបង់ក្នុង១ខែ៖</span>
+                            <span class="value font-bold text-success" id="pReceiptInterestAmount">$50.00 / ខែ</span>
+                        </div>
                     </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_name">ឈ្មោះអតិថិជន៖</span>
-                        <span class="value font-bold" id="pReceiptName">មាស សុខា</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_phone">លេខទូរសព្ទ៖</span>
-                        <span class="value" id="pReceiptPhone">010 888 999</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_village">អាសយដ្ឋានភូមិ៖</span>
-                        <span class="value" id="pReceiptVillage">ព្រៃម្នាស់</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_date">ថ្ងៃខែឆ្នាំចងការ៖</span>
-                        <span class="value" id="pReceiptDate">10-07-2026</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="tbl_collateral">វត្ថុបញ្ចាំ៖</span>
-                        <span class="value" id="pReceiptCollateral">មាន (ប្លង់ដី)</span>
-                    </div>
-                </div>
 
-                <hr class="receipt-dashed-line">
+                    <hr class="receipt-dashed-line">
+                    
+                    <!-- History of Repayments if any -->
+                    <div class="receipt-repayments-summary" id="pReceiptHistorySection">
+                        <h4 class="font-bold center-text mb-1" data-translate="receipt_payment_history">ប្រវត្តិបង់ប្រាក់កន្លងមក</h4>
+                        <div id="pReceiptRepaymentList">
+                            <!-- Dynamic list of payments -->
+                        </div>
+                    </div>
 
-                <div class="receipt-financials">
-                    <div class="receipt-row large">
-                        <span class="label" data-translate="lbl_loan_capital">ប្រាក់ចងការសរុប៖</span>
-                        <span class="value font-bold text-large" id="pReceiptCapital">$1,000.00</span>
+                    <div class="receipt-footer">
+                        <p class="receipt-thank-you" data-translate="receipt_thank_you">សូមអរគុណចំពោះការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!</p>
+                        <p class="receipt-signature-row">
+                            <span data-translate="receipt_sign_borrower">ស្នាមមេដៃអតិថិជន</span>
+                            <span data-translate="receipt_sign_lender">ហត្ថលេខាអ្នកចងការ</span>
+                        </p>
+                        <div class="receipt-signature-space"></div>
                     </div>
-                    <div class="receipt-row">
-                        <span class="label" data-translate="lbl_interest_rate_monthly">ការប្រាក់ក្នុង១ខែ៖</span>
-                        <span class="value" id="pReceiptRate">5%</span>
-                    </div>
-                    <div class="receipt-row highlight">
-                        <span class="label" data-translate="lbl_interest_amount_monthly">ការប្រាក់ត្រូវបង់ក្នុង១ខែ៖</span>
-                        <span class="value font-bold text-success" id="pReceiptInterestAmount">$50.00 / ខែ</span>
-                    </div>
-                </div>
-
-                <hr class="receipt-dashed-line">
-                
-                <!-- History of Repayments if any -->
-                <div class="receipt-repayments-summary" id="pReceiptHistorySection">
-                    <h4 class="font-bold center-text mb-1" data-translate="receipt_payment_history">ប្រវត្តិបង់ប្រាក់កន្លងមក</h4>
-                    <div id="pReceiptRepaymentList">
-                        <!-- Dynamic list of payments -->
-                    </div>
-                </div>
-
-                <div class="receipt-footer">
-                    <p class="receipt-thank-you" data-translate="receipt_thank_you">សូមអរគុណចំពោះការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!</p>
-                    <p class="receipt-signature-row">
-                        <span data-translate="receipt_sign_borrower">ស្នាមមេដៃអតិថិជន</span>
-                        <span data-translate="receipt_sign_lender">ហត្ថលេខាអ្នកចងការ</span>
-                    </p>
-                    <div class="receipt-signature-space"></div>
                 </div>
             </div>
             
