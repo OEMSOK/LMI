@@ -1665,3 +1665,182 @@ textarea.form-control {
     letter-spacing: 0.5px;
     font-family: var(--font-en);
 }
+
+/* ==========================================
+   MOBILE RESPONSIVE ENHANCEMENTS (TABLES, MODALS, QUICK ACTIONS)
+   ========================================== */
+.btn-logout-header {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--color-danger);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    align-items: center;
+    justify-content: center;
+}
+.btn-logout-header:hover {
+    background-color: var(--color-danger-soft);
+}
+.btn-logout-header:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    /* Header optimizations */
+    .btn-logout-header {
+        display: inline-flex;
+    }
+    .cloud-text {
+        display: none;
+    }
+    .profile-details {
+        display: none;
+    }
+    .cloud-indicator {
+        padding: 8px;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
+    }
+    .cloud-indicator i {
+        font-size: 16px;
+    }
+
+    /* Bottom Sheet Modals for Mobile */
+    .modal-container {
+        align-items: flex-end;
+        padding: 0;
+    }
+    
+    .modal-card {
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        max-height: 92vh;
+        animation: slideUpBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        width: 100%;
+        border-bottom: none;
+    }
+    
+    .modal-card::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background-color: var(--color-gray-300);
+        border-radius: 2px;
+        margin: 8px auto 0 auto;
+        flex-shrink: 0;
+    }
+
+    /* Table to Cards conversion */
+    .table-responsive {
+        border: none;
+        overflow-x: visible;
+        padding: 4px;
+    }
+    
+    .table {
+        display: block;
+        width: 100%;
+    }
+    
+    .table thead {
+        display: none; /* Hide header row */
+    }
+    
+    .table tbody {
+        display: block;
+        width: 100%;
+    }
+    
+    .table tr {
+        display: block;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+    }
+    
+    .table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--color-gray-100);
+        text-align: right;
+        font-size: 14px;
+        min-height: 42px;
+    }
+    
+    .table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        justify-content: center;
+        margin-top: 12px;
+    }
+    
+    .table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 15px;
+    }
+    
+    .table td.no-label::before {
+        display: none;
+    }
+    
+    .table td.no-label {
+        justify-content: center;
+    }
+    
+    /* Make ID & status look nice inside card layout */
+    .table td[data-label="ID"],
+    .table td[data-label="លេខសម្គាល់"] {
+        font-size: 16px;
+        font-weight: 700;
+    }
+    
+    .actions-cell {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    
+    .actions-cell button {
+        flex: 1;
+        height: 42px;
+        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Print Preview Responsive Padding */
+    .receipt-print-area {
+        padding: 15px 12px;
+    }
+    .receipt-row.highlight {
+        padding: 8px;
+    }
+}
+
+@keyframes slideUpBottom {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 24px 16px;
+    }
+}

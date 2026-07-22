@@ -121,6 +121,9 @@
                             <span class="user-role" data-translate="admin_role">អ្នកគ្រប់គ្រង</span>
                         </div>
                     </div>
+                    <button type="button" class="btn-logout-header" onclick="handleLogout()" title="ចាកចេញ / Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             </header>
 
@@ -868,6 +871,7 @@
             
             <div class="modal-footer border-top no-print">
                 <button type="button" class="btn btn-outline" onclick="closeModal('printReceiptModal')" data-translate="btn_close">បិទ</button>
+                <button type="button" class="btn btn-success" onclick="shareReceipt()"><i class="fa-solid fa-share-nodes"></i> <span data-translate="btn_share">ចែករំលែក (Share)</span></button>
                 <button type="button" class="btn btn-primary" onclick="printReceipt()"><i class="fa-solid fa-print"></i> <span data-translate="btn_print">បោះពុម្ភ (Print)</span></button>
             </div>
         </div>

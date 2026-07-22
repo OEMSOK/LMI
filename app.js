@@ -133,6 +133,7 @@ const translations = {
         receipt_sign_borrower: "ស្នាមមេដៃអតិថិជន",
         receipt_sign_lender: "ហត្ថលេខាអ្នកចងការ",
         btn_close: "បិទ",
+        btn_share: "ចែករំលែក",
         
         // Messages
         msg_auth_failed: "Incorrect PIN/Password!",
@@ -275,6 +276,7 @@ const translations = {
         receipt_sign_borrower: "Borrower Thumbprint",
         receipt_sign_lender: "Lender Signature",
         btn_close: "Close",
+        btn_share: "Share",
         
         // Messages
         msg_auth_failed: "Incorrect PIN/Password!",
@@ -311,6 +313,7 @@ let currentLanguage = localStorage.getItem("lmi_lang") || "km";
 let currentTheme = localStorage.getItem("lmi_theme") || "indigo";
 let borrowersData = {};
 let inactivityTimeout = null;
+let activePrintKey = null;
 
 // ==========================================================================
 // TOAST NOTIFICATIONS (PREMIUM UI FEEDBACK)
@@ -739,13 +742,13 @@ function renderRecentBorrowersTable() {
         
         html += `
         <tr>
-            <td class="font-bold text-primary">${b.id || ""}</td>
-            <td>${b.name || ""}</td>
-            <td>${b.phone || ""}</td>
-            <td>${displayVillage}</td>
-            <td class="font-bold">${formatCurrency(b.amount, b.currency)}</td>
-            <td>${formattedDate}</td>
-            <td>${statusBadge}</td>
+            <td data-label="${translations[currentLanguage]["tbl_id"]}" class="font-bold text-primary">${b.id || ""}</td>
+            <td data-label="${translations[currentLanguage]["tbl_name"]}">${b.name || ""}</td>
+            <td data-label="${translations[currentLanguage]["tbl_phone"]}">${b.phone || ""}</td>
+            <td data-label="${translations[currentLanguage]["tbl_village"]}">${displayVillage}</td>
+            <td data-label="${translations[currentLanguage]["tbl_amount"]}" class="font-bold">${formatCurrency(b.amount, b.currency)}</td>
+            <td data-label="${translations[currentLanguage]["tbl_date"]}">${formattedDate}</td>
+            <td data-label="${translations[currentLanguage]["tbl_status"]}">${statusBadge}</td>
         </tr>
         `;
     });
@@ -803,16 +806,16 @@ function renderBorrowersTableList() {
                 
             html += `
             <tr>
-                <td class="font-bold text-primary">${b.id || ""}</td>
-                <td class="font-medium">${b.name || ""}</td>
-                <td>${b.phone || ""}</td>
-                <td>${displayVillage}</td>
-                <td class="font-bold">${formatCurrency(b.amount, b.currency)}</td>
-                <td>${b.interestRate}%</td>
-                <td>${formatDateString(b.date)}</td>
-                <td>${collateralText}</td>
-                <td>${statusBadge}</td>
-                <td>
+                <td data-label="${translations[currentLanguage]["tbl_id"]}" class="font-bold text-primary">${b.id || ""}</td>
+                <td data-label="${translations[currentLanguage]["tbl_name"]}" class="font-medium">${b.name || ""}</td>
+                <td data-label="${translations[currentLanguage]["tbl_phone"]}">${b.phone || ""}</td>
+                <td data-label="${translations[currentLanguage]["tbl_village"]}">${displayVillage}</td>
+                <td data-label="${translations[currentLanguage]["tbl_amount"]}" class="font-bold">${formatCurrency(b.amount, b.currency)}</td>
+                <td data-label="${translations[currentLanguage]["tbl_interest_rate"]}">${b.interestRate}%</td>
+                <td data-label="${translations[currentLanguage]["tbl_date"]}">${formatDateString(b.date)}</td>
+                <td data-label="${translations[currentLanguage]["tbl_collateral"]}">${collateralText}</td>
+                <td data-label="${translations[currentLanguage]["tbl_status"]}">${statusBadge}</td>
+                <td class="no-label">
                     <div class="actions-cell">
                         ${b.status !== "paid" ? `
                             <button class="btn btn-icon-only btn-success" onclick="openRepaymentModal('${key}')" title="${translations[currentLanguage]["btn_pay"]}">
@@ -934,14 +937,14 @@ function renderRepaymentsHistoryTable() {
                 
             html += `
             <tr>
-                <td class="font-bold text-primary">${p.borrowerId}</td>
-                <td class="font-medium">${p.borrowerName}</td>
-                <td>${p.borrowerPhone}</td>
-                <td>${formatDateString(p.date)}</td>
-                <td>${typeText}</td>
-                <td class="font-bold text-success">${formatCurrency(p.amount, p.currency)}</td>
-                <td>${p.note || ""}</td>
-                <td>
+                <td data-label="${translations[currentLanguage]["tbl_id"]}" class="font-bold text-primary">${p.borrowerId}</td>
+                <td data-label="${translations[currentLanguage]["tbl_name"]}" class="font-medium">${p.borrowerName}</td>
+                <td data-label="${translations[currentLanguage]["tbl_phone"]}">${p.borrowerPhone}</td>
+                <td data-label="${translations[currentLanguage]["tbl_repay_date"]}">${formatDateString(p.date)}</td>
+                <td data-label="${translations[currentLanguage]["tbl_repay_type"]}">${typeText}</td>
+                <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold text-success">${formatCurrency(p.amount, p.currency)}</td>
+                <td data-label="${translations[currentLanguage]["tbl_note"]}">${p.note || ""}</td>
+                <td class="no-label">
                     <div class="actions-cell">
                         <button class="btn btn-icon-only btn-primary" onclick="openPrintModal('${p.borrowerKey}')" title="${translations[currentLanguage]["btn_print"]}">
                             <i class="fa-solid fa-print"></i>
@@ -1437,10 +1440,10 @@ function renderRepaymentHistory(borrower) {
             
         html += `
         <tr>
-            <td>${formatDateString(p.date)}</td>
-            <td>${typeText}</td>
-            <td class="font-bold text-success">${formatCurrency(p.amount, borrower.currency)}</td>
-            <td>${p.note || ""}</td>
+            <td data-label="${translations[currentLanguage]["tbl_date"]}">${formatDateString(p.date)}</td>
+            <td data-label="${translations[currentLanguage]["tbl_type"]}">${typeText}</td>
+            <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold text-success">${formatCurrency(p.amount, borrower.currency)}</td>
+            <td data-label="${translations[currentLanguage]["tbl_note"]}">${p.note || ""}</td>
         </tr>
         `;
     });
@@ -1451,6 +1454,7 @@ function renderRepaymentHistory(borrower) {
 // PRINT ENGINE (RECEIPT PREVIEW & BROWSER PRINTER)
 // ==========================================================================
 function openPrintModal(key) {
+    activePrintKey = key;
     const b = borrowersData[key];
     if (!b) return;
     
@@ -1514,6 +1518,59 @@ function printReceipt() {
     window.print();
 }
 window.printReceipt = printReceipt;
+
+function shareReceiptText(key) {
+    const b = borrowersData[key];
+    if (!b) return "";
+    
+    const isKh = currentLanguage === "km";
+    const displayVillage = b.village === "other" ? (b.customVillage || "") : b.village;
+    const principal = parseFloat(b.amount) || 0;
+    const rate = parseFloat(b.interestRate) || 0;
+    const monthlyInterest = (principal * rate) / 100;
+    
+    let text = isKh 
+        ? `📝 វិក្កយបត្រព័ត៌មានឥណទាន (LMI)\n`
+        : `📝 Loan Information Statement (LMI)\n`;
+    text += `----------------------------------\n`;
+    text += `${isKh ? '🆔 លេខសម្គាល់៖' : '🆔 ID:'} ${b.id || ""}\n`;
+    text += `${isKh ? '👤 ឈ្មោះអតិថិជន៖' : '👤 Customer Name:'} ${b.name || ""}\n`;
+    text += `${isKh ? '📞 លេខទូរសព្ទ៖' : '📞 Phone:'} ${b.phone || ""}\n`;
+    text += `${isKh ? '📍 អាសយដ្ឋានភូមិ៖' : '📍 Village:'} ${displayVillage}\n`;
+    text += `${isKh ? '📅 ថ្ងៃចងការ៖' : '📅 Date:'} ${formatDateString(b.date)}\n`;
+    text += `----------------------------------\n`;
+    text += `${isKh ? '💰 ប្រាក់ចងការ៖' : '💰 Capital:'} ${formatCurrency(principal, b.currency)}\n`;
+    text += `${isKh ? '📈 ការប្រាក់ក្នុង១ខែ៖' : '📈 Rate:'} ${rate}%\n`;
+    text += `${isKh ? '💵 ការប្រាក់ត្រូវបង់៖' : '💵 Interest Amount:'} ${formatCurrency(monthlyInterest, b.currency)} / ${isKh ? 'ខែ' : 'Month'}\n`;
+    text += `----------------------------------\n`;
+    text += isKh ? `🙏 សូមអរគុណចំពោះការប្រើប្រាស់សេវាកម្មរបស់យើងខ្ញុំ!` : `🙏 Thank you for using our services!`;
+    
+    return text;
+}
+
+function shareReceipt() {
+    if (!activePrintKey) return;
+    const text = shareReceiptText(activePrintKey);
+    const isKh = currentLanguage === "km";
+    
+    if (navigator.share) {
+        navigator.share({
+            title: isKh ? 'វិក្កយបត្រព័ត៌មានឥណទាន (LMI)' : 'Loan Information Statement (LMI)',
+            text: text
+        }).catch(err => {
+            console.error("Error sharing:", err);
+        });
+    } else {
+        // Fallback to copy to clipboard
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(isKh ? "បានចម្លងអត្ថបទវិក្កយបត្រទៅ Clipboard!" : "Receipt text copied to clipboard!", "success");
+        }).catch(err => {
+            console.error("Clipboard copy failed:", err);
+            showToast("Failed to copy receipt text!", "error");
+        });
+    }
+}
+window.shareReceipt = shareReceipt;
 
 // ==========================================================================
 // IMPORT & EXPORT CSV BACKUP
