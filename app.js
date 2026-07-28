@@ -161,7 +161,14 @@ const translations = {
         lbl_months: "ខែ",
         lbl_principal: "ប្រាក់ដើម",
         lbl_total_interest_due: "ការប្រាក់សរុប",
-        lbl_total_repayment: "សរុបត្រូវសង"
+        lbl_total_repayment: "សរុបត្រូវសង",
+        btn_borrow_more: "ខ្ចីថែម",
+        modal_borrow_more_title: "ប្រតិបត្តិការខ្ចីប្រាក់បន្ថែម",
+        lbl_borrow_more_amount: "ចំនួនទឹកប្រាក់ខ្ចីថែម",
+        lbl_borrow_more_date: "ថ្ងៃខែឆ្នាំខ្ចីប្រាក់",
+        lbl_new_total_debt: "សរុបប្រាក់ជំពាក់ថ្មី",
+        btn_submit_borrow_more: "បញ្ជូនការខ្ចីប្រាក់",
+        msg_borrow_more_success: "ប្រតិបត្តិការខ្ចីប្រាក់បន្ថែមបានជោគជ័យ!"
     },
     en: {
         // Menu & Navigation
@@ -304,7 +311,14 @@ const translations = {
         lbl_months: "Months",
         lbl_principal: "Principal",
         lbl_total_interest_due: "Total Interest",
-        lbl_total_repayment: "Total Repayable"
+        lbl_total_repayment: "Total Repayable",
+        btn_borrow_more: "Borrow More",
+        modal_borrow_more_title: "Borrow More Operation",
+        lbl_borrow_more_amount: "Additional Borrow Amount",
+        lbl_borrow_more_date: "Borrowing Date",
+        lbl_new_total_debt: "New Total Debt",
+        btn_submit_borrow_more: "Submit Borrowing",
+        msg_borrow_more_success: "Successfully recorded additional borrowing!"
     }
 };
 
@@ -826,6 +840,9 @@ function renderBorrowersTableList() {
                                 <i class="fa-solid fa-hand-holding-dollar"></i>
                             </button>
                         `}
+                        <button class="btn btn-icon-only btn-warning" onclick="openBorrowMoreModal('${key}')" title="${translations[currentLanguage]["btn_borrow_more"]}">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </button>
                         <button class="btn btn-icon-only btn-primary" onclick="openPrintModal('${key}')" title="${translations[currentLanguage]["btn_print"]}">
                             <i class="fa-solid fa-print"></i>
                         </button>
@@ -931,6 +948,8 @@ function renderRepaymentsHistoryTable() {
                 typeText = `<span class="badge badge-success"><span class="badge-dot"></span>${translations[currentLanguage]["opt_repay_full"]}</span>`;
             } else if (p.type === "interest_only") {
                 typeText = `<span class="badge badge-primary"><span class="badge-dot"></span>${translations[currentLanguage]["opt_repay_interest_only"]}</span>`;
+            } else if (p.type === "borrow_more") {
+                typeText = `<span class="badge badge-warning"><span class="badge-dot"></span>${translations[currentLanguage]["btn_borrow_more"]}</span>`;
             } else {
                 typeText = `<span class="badge badge-warning"><span class="badge-dot"></span>${translations[currentLanguage]["opt_repay_interest_and_principal"]}</span>`;
             }
@@ -942,7 +961,7 @@ function renderRepaymentsHistoryTable() {
                 <td data-label="${translations[currentLanguage]["tbl_phone"]}">${p.borrowerPhone}</td>
                 <td data-label="${translations[currentLanguage]["tbl_repay_date"]}">${formatDateString(p.date)}</td>
                 <td data-label="${translations[currentLanguage]["tbl_repay_type"]}">${typeText}</td>
-                <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold text-success">${formatCurrency(p.amount, p.currency)}</td>
+                <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold ${p.type === 'borrow_more' ? 'text-danger' : 'text-success'}">${p.type === 'borrow_more' ? '+' : '-'}${formatCurrency(p.amount, p.currency)}</td>
                 <td data-label="${translations[currentLanguage]["tbl_note"]}">${p.note || ""}</td>
                 <td class="no-label">
                     <div class="actions-cell">
@@ -982,7 +1001,14 @@ function deleteRepaymentRecord(borrowerKey, paymentKey) {
         const payment = b.payments[paymentKey];
         if (!payment) return;
         
-        const refundAmount = payment.type === "interest_only" ? 0 : (parseFloat(payment.amount) || 0);
+        let refundAmount = 0;
+        if (payment.type !== "interest_only") {
+            if (payment.type === "borrow_more") {
+                refundAmount = -(parseFloat(payment.amount) || 0); // deleting a borrow_more decreases outstanding debt
+            } else {
+                refundAmount = parseFloat(payment.amount) || 0; // deleting a repayment increases outstanding debt
+            }
+        }
         
         // Clone and delete from the payments structure
         let newPayments = null;
@@ -996,7 +1022,7 @@ function deleteRepaymentRecord(borrowerKey, paymentKey) {
             newPayments = Object.values(newPayments);
         }
         
-        const newAmount = (b.amount || 0) + refundAmount;
+        const newAmount = Math.max(0, (b.amount || 0) + refundAmount);
         const newStatus = newAmount > 0 ? "active" : "paid";
         
         const updates = {
@@ -1434,6 +1460,8 @@ function renderRepaymentHistory(borrower) {
             typeText = `<span class="text-success font-bold">${translations[currentLanguage]["opt_repay_full"]}</span>`;
         } else if (p.type === "interest_only") {
             typeText = `<span class="text-primary font-bold">${translations[currentLanguage]["opt_repay_interest_only"]}</span>`;
+        } else if (p.type === "borrow_more") {
+            typeText = `<span class="text-warning font-bold">${translations[currentLanguage]["btn_borrow_more"]}</span>`;
         } else {
             typeText = `<span>${translations[currentLanguage]["opt_repay_interest_and_principal"]}</span>`;
         }
@@ -1442,7 +1470,7 @@ function renderRepaymentHistory(borrower) {
         <tr>
             <td data-label="${translations[currentLanguage]["tbl_date"]}">${formatDateString(p.date)}</td>
             <td data-label="${translations[currentLanguage]["tbl_type"]}">${typeText}</td>
-            <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold text-success">${formatCurrency(p.amount, borrower.currency)}</td>
+            <td data-label="${translations[currentLanguage]["tbl_repay_amount"]}" class="font-bold ${p.type === 'borrow_more' ? 'text-danger' : 'text-success'}">${p.type === 'borrow_more' ? '+' : '-'}${formatCurrency(p.amount, borrower.currency)}</td>
             <td data-label="${translations[currentLanguage]["tbl_note"]}">${p.note || ""}</td>
         </tr>
         `;
@@ -1494,13 +1522,16 @@ function openPrintModal(key) {
                 paymentTypeName = currentLanguage === "km" ? "សងផ្ដាច់" : "Full";
             } else if (p.type === "interest_only") {
                 paymentTypeName = currentLanguage === "km" ? "សងការប្រាក់" : "Interest";
+            } else if (p.type === "borrow_more") {
+                paymentTypeName = currentLanguage === "km" ? "ខ្ចីថែម" : "Borrow More";
             } else {
                 paymentTypeName = currentLanguage === "km" ? "សងខ្លះ" : "Part";
             }
+            const isBorrowMore = p.type === "borrow_more";
             repayHtml += `
-            <div class="receipt-repay-item">
+            <div class="receipt-repay-item ${isBorrowMore ? 'text-danger' : ''}">
                 <span>${formatDateString(p.date)} (${paymentTypeName})</span>
-                <span class="font-bold">-${formatCurrency(p.amount, b.currency)}</span>
+                <span class="font-bold">${isBorrowMore ? '+' : '-'}${formatCurrency(p.amount, b.currency)}</span>
             </div>
             `;
         });
@@ -1907,6 +1938,105 @@ function toggleLoginPasswordVisibility() {
     }
 }
 window.toggleLoginPasswordVisibility = toggleLoginPasswordVisibility;
+
+// ==========================================================================
+// BORROW MORE MANAGEMENT
+// ==========================================================================
+function openBorrowMoreModal(key) {
+    const b = borrowersData[key];
+    if (!b) return;
+    
+    document.getElementById("borrowMoreKey").value = key;
+    document.getElementById("borrowMoreClientName").textContent = b.name || "";
+    document.getElementById("borrowMoreClientId").textContent = `ID: ${b.id || ""}`;
+    
+    const currency = b.currency || "USD";
+    document.getElementById("borrowMoreOutstandingAmount").textContent = formatCurrency(b.amount || 0, currency);
+    document.getElementById("borrowMoreCurrencyLabel").textContent = currency;
+    document.getElementById("borrowMoreNewTotalCurrencyLabel").textContent = currency;
+    
+    // Set interest rate from current value
+    document.getElementById("borrowMoreInterestRate").value = b.interestRate || 0;
+    
+    // Reset amount
+    document.getElementById("borrowMoreAmount").value = "";
+    document.getElementById("borrowMoreNewTotal").value = formatCurrency(b.amount || 0, currency);
+    
+    // Default date is today
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("borrowMoreDate").value = today;
+    
+    // Note default
+    document.getElementById("borrowMoreNote").value = "";
+    
+    document.getElementById("borrowMoreModal").classList.remove("d-none");
+}
+window.openBorrowMoreModal = openBorrowMoreModal;
+
+function updateBorrowMoreCalculations() {
+    const key = document.getElementById("borrowMoreKey").value;
+    const b = borrowersData[key];
+    if (!b) return;
+    
+    const additionalAmount = parseFloat(document.getElementById("borrowMoreAmount").value) || 0;
+    const currentAmount = parseFloat(b.amount) || 0;
+    const newTotal = currentAmount + additionalAmount;
+    
+    document.getElementById("borrowMoreNewTotal").value = formatCurrency(newTotal, b.currency || "USD");
+}
+window.updateBorrowMoreCalculations = updateBorrowMoreCalculations;
+
+function submitBorrowMore(event) {
+    event.preventDefault();
+    
+    const key = document.getElementById("borrowMoreKey").value;
+    const b = borrowersData[key];
+    if (!b) return;
+    
+    const borrowMoreAmount = parseFloat(document.getElementById("borrowMoreAmount").value) || 0;
+    const date = document.getElementById("borrowMoreDate").value;
+    const note = document.getElementById("borrowMoreNote").value.trim();
+    
+    if (borrowMoreAmount <= 0) return;
+    
+    const newOutstanding = b.amount + borrowMoreAmount;
+    const status = "active"; // borrowing more always makes it active
+    
+    // Log details of this borrowing
+    let finalNote = note;
+    if (!finalNote) {
+        finalNote = currentLanguage === "km" ? "ខ្ចីបន្ថែម" : "Borrowed More";
+    }
+    
+    const paymentRecord = {
+        amount: borrowMoreAmount,
+        date,
+        type: "borrow_more",
+        note: finalNote
+    };
+    
+    // Clone previous payments list or create a new one
+    const paymentsList = b.payments ? [...Object.values(b.payments)] : [];
+    paymentsList.push(paymentRecord);
+    
+    const updates = {
+        amount: newOutstanding,
+        date, // Update the principal loan date to the new borrowing date as requested
+        status,
+        payments: paymentsList
+    };
+    
+    db.ref(`borrowers/${key}`).update(updates)
+        .then(() => {
+            showToast(translations[currentLanguage]["msg_borrow_more_success"], "success");
+            closeModal("borrowMoreModal");
+        })
+        .catch(err => {
+            console.error("Firebase write borrow more error: ", err);
+            showToast("Borrowing logging failed!", "error");
+        });
+}
+window.submitBorrowMore = submitBorrowMore;
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initialise Theme and Language from Local Storage directly

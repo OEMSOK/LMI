@@ -801,6 +801,74 @@
         </div>
     </div>
 
+    <!-- 2.5. BORROW MORE MODAL -->
+    <div id="borrowMoreModal" class="modal-container d-none">
+        <div class="modal-card max-width-600">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-circle-plus text-warning"></i> 
+                    <span data-translate="modal_borrow_more_title">ប្រតិបត្តិការខ្ចីប្រាក់បន្ថែម</span>
+                </h3>
+                <button class="btn-close-modal" onclick="closeModal('borrowMoreModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="borrowMoreForm" onsubmit="submitBorrowMore(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="borrowMoreKey">
+                    
+                    <!-- Client Details Overview -->
+                    <div class="repay-client-summary mb-4" style="background-color: var(--color-warning-soft); border-left-color: var(--color-warning);">
+                        <div class="client-brief">
+                            <h4 id="borrowMoreClientName" class="font-bold">ឈ្មោះអតិថិជន</h4>
+                            <span id="borrowMoreClientId" class="text-muted">ID: LMI-0000</span>
+                        </div>
+                        <div class="loan-brief">
+                            <span data-translate="lbl_outstanding_loan">ប្រាក់ជំពាក់សរុប៖</span>
+                            <h3 id="borrowMoreOutstandingAmount" class="text-warning">0.00</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="borrowMoreAmount" data-translate="lbl_borrow_more_amount">ចំនួនទឹកប្រាក់ខ្ចីថែម <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" id="borrowMoreAmount" class="form-control" min="0.01" step="any" required placeholder="0.00" onkeyup="updateBorrowMoreCalculations()">
+                                <span class="input-group-addon" id="borrowMoreCurrencyLabel">USD</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="borrowMoreDate" data-translate="lbl_borrow_more_date">ថ្ងៃខែឆ្នាំខ្ចីប្រាក់ <span class="text-danger">*</span></label>
+                            <input type="date" id="borrowMoreDate" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="borrowMoreInterestRate" data-translate="form_interest">ការប្រាក់ក្នុង១ខែ (%)</label>
+                            <input type="number" id="borrowMoreInterestRate" class="form-control" readonly style="background-color: var(--color-gray-100);">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="borrowMoreNewTotal" data-translate="lbl_new_total_debt">សរុបប្រាក់ជំពាក់ថ្មី</label>
+                            <div class="input-group">
+                                <input type="text" id="borrowMoreNewTotal" class="form-control" readonly placeholder="0.00">
+                                <span class="input-group-addon" id="borrowMoreNewTotalCurrencyLabel">USD</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-span-2">
+                            <label for="borrowMoreNote" data-translate="form_repay_note">កំណត់សម្គាល់បន្ថែម</label>
+                            <input type="text" id="borrowMoreNote" class="form-control" placeholder="ឧទាហរណ៍៖ ខ្ចីបន្ថែមសម្រាប់អាជីវកម្ម...">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-footer mt-4">
+                    <button type="submit" class="btn btn-warning btn-block">
+                        <i class="fa-solid fa-circle-check"></i> <span data-translate="btn_submit_borrow_more">បញ្ជូនការខ្ចីប្រាក់</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- 3. PRINT RECEIPT / INVOICE MODAL -->
     <div id="printReceiptModal" class="modal-container d-none">
         <div class="modal-card max-width-600 print-card">
