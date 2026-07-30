@@ -66,7 +66,7 @@ const translations = {
         opt_no: "គ្មាន",
         
         // List Section
-        list_title: "Borrower Information List",
+        list_title: "តារាងព័ត៌មានអ្នកខ្ចីប្រាក់",
         all_villages: "ភូមិទាំងអស់",
         village_others: "ផ្សេងៗ",
         tbl_id: "លេខសម្គាល់",
