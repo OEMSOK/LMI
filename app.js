@@ -41,7 +41,7 @@ const translations = {
         stat_total_borrowers: "ចំនួនអ្នកចងការសរុប",
         stat_total_riel: "សរុបប្រាក់រៀល (KHR)",
         stat_total_usd: "សរុបប្រាក់ដុល្លា (USD)",
-        recent_activity_title: "សកម្មភាពអ្នកចងការថ្មីៗ (៥នាក់ចុងក្រោយ)",
+        recent_activity_title: "សកម្មភាពអ្នកចងការថ្មីៗ (១០នាក់ចុងក្រោយ)",
         no_data: "មិនទាន់មានទិន្នន័យនៅឡើយទេ",
         active_status: "កំពុងចងការ",
         paid_status: "សងរួចរាល់",
@@ -191,7 +191,7 @@ const translations = {
         stat_total_borrowers: "Total Borrowers",
         stat_total_riel: "Total KHR Amount",
         stat_total_usd: "Total USD Amount",
-        recent_activity_title: "Recent Borrowers (Last 5 Activities)",
+        recent_activity_title: "Recent Borrowers (Last 10 Activities)",
         no_data: "No data available yet",
         active_status: "Active",
         paid_status: "Fully Paid",
@@ -736,16 +736,16 @@ function renderRecentBorrowersTable() {
     // Sort by createdAt timestamp in descending order (newest first)
     list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     
-    // Take top 5
-    const top5 = list.slice(0, 5);
+    // Take top 10
+    const top10 = list.slice(0, 10);
     
-    if (top5.length === 0) {
+    if (top10.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${translations[currentLanguage]["no_data"]}</td></tr>`;
         return;
     }
     
     let html = "";
-    top5.forEach(b => {
+    top10.forEach(b => {
         const isKh = currentLanguage === "km";
         const statusBadge = b.status === "paid" 
             ? `<span class="badge badge-success"><span class="badge-dot"></span>${translations[currentLanguage]["paid_status"]}</span>`
@@ -2106,4 +2106,76 @@ document.addEventListener("DOMContentLoaded", () => {
             if (errorMsg) errorMsg.classList.add("d-none");
         });
     }
+
+    // Initialize draggable bottom sheets for mobile modals
+    initDraggableBottomSheets();
 });
+
+// ==========================================================================
+// DRAGGABLE BOTTOM SHEET FOR MOBILE MODALS
+// ==========================================================================
+function initDraggableBottomSheets() {
+    const modals = document.querySelectorAll('.modal-card');
+    
+    modals.forEach(card => {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        const modalContainer = card.parentElement; // .modal-container
+        const body = card.querySelector('.modal-body') || card.querySelector('.receipt-preview-body');
+        
+        const onTouchStart = (e) => {
+            if (window.innerWidth > 768) return;
+            
+            // Ignore if targeting interactive elements
+            if (e.target.closest('input, select, textarea, button, a, .radio-box')) return;
+            
+            const isAtTop = body ? body.scrollTop === 0 : true;
+            
+            // Drag starts on header or if the body is scrolled to the top
+            if (e.target.closest('.modal-header') || isAtTop) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+                card.style.transition = 'none';
+            }
+        };
+        
+        const onTouchMove = (e) => {
+            if (!isDragging) return;
+            
+            const deltaY = e.touches[0].clientY - startY;
+            if (deltaY > 0) {
+                if (e.cancelable) e.preventDefault();
+                card.style.transform = `translateY(${deltaY}px)`;
+                currentY = deltaY;
+            } else {
+                card.style.transform = '';
+                currentY = 0;
+            }
+        };
+        
+        const onTouchEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            card.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            if (currentY > 120) {
+                const modalId = modalContainer.id;
+                if (modalId) {
+                    closeModal(modalId);
+                }
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 300);
+            } else {
+                card.style.transform = '';
+            }
+            currentY = 0;
+        };
+        
+        card.addEventListener('touchstart', onTouchStart, { passive: true });
+        card.addEventListener('touchmove', onTouchMove, { passive: false });
+        card.addEventListener('touchend', onTouchEnd, { passive: true });
+    });
+}
