@@ -168,7 +168,10 @@ const translations = {
         lbl_borrow_more_date: "ថ្ងៃខែឆ្នាំខ្ចីប្រាក់",
         lbl_new_total_debt: "សរុបប្រាក់ជំពាក់ថ្មី",
         btn_submit_borrow_more: "បញ្ជូនការខ្ចីប្រាក់",
-        msg_borrow_more_success: "ប្រតិបត្តិការខ្ចីប្រាក់បន្ថែមបានជោគជ័យ!"
+        msg_borrow_more_success: "ប្រតិបត្តិការខ្ចីប្រាក់បន្ថែមបានជោគជ័យ!",
+        lbl_paid_interest: "ទូទាត់ការប្រាក់",
+        lbl_paid_principal: "ទូទាត់ប្រាក់ដើម",
+        lbl_remaining_principal: "ប្រាក់ដើមនៅសល់"
     },
     en: {
         // Menu & Navigation
@@ -318,7 +321,10 @@ const translations = {
         lbl_borrow_more_date: "Borrowing Date",
         lbl_new_total_debt: "New Total Debt",
         btn_submit_borrow_more: "Submit Borrowing",
-        msg_borrow_more_success: "Successfully recorded additional borrowing!"
+        msg_borrow_more_success: "Successfully recorded additional borrowing!",
+        lbl_paid_interest: "Paid Interest",
+        lbl_paid_principal: "Paid Principal",
+        lbl_remaining_principal: "Remaining Principal"
     }
 };
 
@@ -1002,12 +1008,12 @@ function deleteRepaymentRecord(borrowerKey, paymentKey) {
         if (!payment) return;
         
         let refundAmount = 0;
-        if (payment.type !== "interest_only") {
-            if (payment.type === "borrow_more") {
-                refundAmount = -(parseFloat(payment.amount) || 0); // deleting a borrow_more decreases outstanding debt
-            } else {
-                refundAmount = parseFloat(payment.amount) || 0; // deleting a repayment increases outstanding debt
-            }
+        if (payment.type === "borrow_more") {
+            refundAmount = -(parseFloat(payment.amount) || 0); // deleting a borrow_more decreases outstanding debt
+        } else if (payment.type !== "interest_only") {
+            // For partial or full, refund only the principalPaid portion
+            const principalPaid = (payment.principalPaid !== undefined) ? parseFloat(payment.principalPaid) : parseFloat(payment.amount);
+            refundAmount = principalPaid || 0; // deleting a repayment increases outstanding debt
         }
         
         // Clone and delete from the payments structure
@@ -1022,13 +1028,24 @@ function deleteRepaymentRecord(borrowerKey, paymentKey) {
             newPayments = Object.values(newPayments);
         }
         
+        // Determine restored date for interest calculations
+        let restoredDate = b.date;
+        if (newPayments && newPayments.length > 0) {
+            const remainingPayments = [...newPayments];
+            remainingPayments.sort((a, b) => new Date(a.date) - new Date(b.date));
+            restoredDate = remainingPayments[remainingPayments.length - 1].date;
+        } else {
+            restoredDate = b.originalDate || b.date;
+        }
+        
         const newAmount = Math.max(0, (b.amount || 0) + refundAmount);
         const newStatus = newAmount > 0 ? "active" : "paid";
         
         const updates = {
             amount: newAmount,
             status: newStatus,
-            payments: newPayments
+            payments: newPayments,
+            date: restoredDate
         };
         
         db.ref(`borrowers/${borrowerKey}`).update(updates)
@@ -1081,6 +1098,7 @@ function saveNewBorrower(event) {
         currency,
         interestRate,
         date,
+        originalDate: date,
         hasCollateral,
         collateral: hasCollateral === "មាន" ? collateral : "",
         status: "active",
@@ -1168,6 +1186,7 @@ function updateBorrower(event) {
         amount,
         interestRate,
         date,
+        originalDate: date,
         hasCollateral,
         collateral,
         status
@@ -1253,10 +1272,18 @@ function openRepaymentModal(key) {
 }
 window.openRepaymentModal = openRepaymentModal;
 
+let isCalculatingRepayment = false;
+
 function updateRepaymentCalculations() {
+    if (isCalculatingRepayment) return;
+    isCalculatingRepayment = true;
+
     const key = document.getElementById("repayKey").value;
     const b = borrowersData[key];
-    if (!b) return;
+    if (!b) {
+        isCalculatingRepayment = false;
+        return;
+    }
 
     const repayType = document.querySelector('input[name="repayType"]:checked').value;
     const category = document.getElementById("repayCategory").value;
@@ -1293,14 +1320,15 @@ function updateRepaymentCalculations() {
     document.getElementById("calcTotalInterest").textContent = formatCurrency(totalInterest, currency);
     document.getElementById("calcTotalRepay").textContent = formatCurrency(totalRepay, currency);
     
+    // Always show calculation details
+    calcDetail.classList.remove("d-none");
+    
     if (repayType === "full") {
         amountInput.value = totalRepay.toFixed(2).replace(/\.00$/, "");
         amountInput.readOnly = true;
-        calcDetail.classList.remove("d-none");
         document.getElementById("repayNote").value = isKh ? "សងផ្ដាច់ទាំងអស់" : "Settled full balance";
     } else {
         amountInput.readOnly = false;
-        calcDetail.classList.add("d-none");
         
         if (category === "interest_only") {
             const monthlyInterest = (principal * rate) / 100;
@@ -1314,7 +1342,45 @@ function updateRepaymentCalculations() {
             }
         }
     }
+
+    // Dynamic Breakdown
+    const repayAmount = parseFloat(amountInput.value) || 0;
+    const calcPaidInterestRow = document.getElementById("calcPaidInterestRow");
+    const calcPaidPrincipalRow = document.getElementById("calcPaidPrincipalRow");
+    const calcRemainingPrincipalRow = document.getElementById("calcRemainingPrincipalRow");
+    
+    if (repayType === "partial") {
+        let interestPaid = 0;
+        let principalPaid = 0;
+        if (category === "interest_only") {
+            interestPaid = repayAmount;
+            principalPaid = 0;
+        } else {
+            interestPaid = Math.min(repayAmount, totalInterest);
+            principalPaid = Math.max(0, repayAmount - interestPaid);
+        }
+        const newOutstanding = Math.max(0, principal - principalPaid);
+        
+        if (calcPaidInterestRow) {
+            calcPaidInterestRow.classList.remove("d-none");
+            document.getElementById("calcPaidInterest").textContent = formatCurrency(interestPaid, currency);
+        }
+        if (calcPaidPrincipalRow) {
+            calcPaidPrincipalRow.classList.remove("d-none");
+            document.getElementById("calcPaidPrincipal").textContent = formatCurrency(principalPaid, currency);
+        }
+        if (calcRemainingPrincipalRow) {
+            calcRemainingPrincipalRow.classList.remove("d-none");
+            document.getElementById("calcRemainingPrincipal").textContent = formatCurrency(newOutstanding, currency);
+        }
+    } else {
+        if (calcPaidInterestRow) calcPaidInterestRow.classList.add("d-none");
+        if (calcPaidPrincipalRow) calcPaidPrincipalRow.classList.add("d-none");
+        if (calcRemainingPrincipalRow) calcRemainingPrincipalRow.classList.add("d-none");
+    }
+    
     validateRepayAmount();
+    isCalculatingRepayment = false;
 }
 window.updateRepaymentCalculations = updateRepaymentCalculations;
 
@@ -1358,18 +1424,49 @@ function validateRepayAmount() {
     if (!b) return;
     
     const category = document.getElementById("repayCategory").value;
+    const repayType = document.querySelector('input[name="repayType"]:checked').value;
     const amountInput = document.getElementById("repayAmount");
     const val = parseFloat(amountInput.value) || 0;
     
-    if (category === "interest_only") {
-        amountInput.classList.remove("text-danger");
-    } else {
-        if (val > b.amount) {
-            amountInput.classList.add("text-danger");
-            showToast(translations[currentLanguage]["msg_repay_limit"], "warning");
+    // Parse Dates
+    const principal = parseFloat(b.amount) || 0;
+    const rate = parseFloat(b.interestRate) || 0;
+    const loanDateStr = b.date;
+    const repayDateStr = document.getElementById("repayDate").value;
+    
+    let diffDays = 0;
+    if (loanDateStr && repayDateStr) {
+        const startDate = new Date(loanDateStr);
+        const endDate = new Date(repayDateStr);
+        startDate.setHours(0,0,0,0);
+        endDate.setHours(0,0,0,0);
+        const timeDiff = endDate - startDate;
+        diffDays = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+    }
+    const durationInMonths = diffDays / 30;
+    const totalInterest = (principal * rate / 100) * durationInMonths;
+
+    amountInput.classList.remove("text-danger");
+    
+    if (repayType === "partial") {
+        if (category === "interest_only") {
+            const monthlyInterest = (principal * rate) / 100;
+            const interestValue = totalInterest > 0 ? totalInterest : monthlyInterest;
+            if (val > interestValue) {
+                amountInput.classList.add("text-danger");
+            }
         } else {
-            amountInput.classList.remove("text-danger");
+            // interest_and_principal
+            if (val > principal + totalInterest) {
+                amountInput.classList.add("text-danger");
+            } else if (val < totalInterest) {
+                amountInput.classList.add("text-danger");
+            }
         }
+    }
+    
+    if (!isCalculatingRepayment) {
+        updateRepaymentCalculations();
     }
 }
 window.validateRepayAmount = validateRepayAmount;
@@ -1389,13 +1486,63 @@ function submitRepayment(event) {
     
     if (repayAmount <= 0) return;
     
-    if (type !== "full" && category !== "interest_only" && repayAmount > b.amount) {
-        showToast(translations[currentLanguage]["msg_repay_limit"], "error");
-        return;
+    // Parse Dates
+    const principal = parseFloat(b.amount) || 0;
+    const rate = parseFloat(b.interestRate) || 0;
+    const loanDateStr = b.date;
+    
+    let diffDays = 0;
+    if (loanDateStr && date) {
+        const startDate = new Date(loanDateStr);
+        const endDate = new Date(date);
+        startDate.setHours(0,0,0,0);
+        endDate.setHours(0,0,0,0);
+        const timeDiff = endDate - startDate;
+        diffDays = Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
+    }
+    const durationInMonths = diffDays / 30;
+    const totalInterest = (principal * rate / 100) * durationInMonths;
+
+    if (type !== "full") {
+        if (category === "interest_only") {
+            // No strict restriction, but shouldn't exceed debt or total interest generally
+        } else {
+            // interest_and_principal
+            if (repayAmount > principal + totalInterest) {
+                showToast(translations[currentLanguage]["msg_repay_limit"], "error");
+                return;
+            }
+            if (repayAmount < totalInterest) {
+                const formattedInterest = formatCurrency(totalInterest, b.currency);
+                const msg = currentLanguage === "km"
+                    ? `ចំនួនទឹកប្រាក់សងត្រូវតែធំជាង ឬស្មើការប្រាក់សរុប (${formattedInterest})!`
+                    : `Repayment amount must be at least the total interest (${formattedInterest})!`;
+                showToast(msg, "error");
+                return;
+            }
+        }
     }
     
-    // If interest_only, outstanding debt remains unchanged
-    const newOutstanding = (type !== "full" && category === "interest_only") ? b.amount : Math.max(0, b.amount - repayAmount);
+    // Calculate new outstanding and payment allocations
+    let newOutstanding = principal;
+    let interestPaid = 0;
+    let principalPaid = 0;
+    
+    if (type === "full") {
+        newOutstanding = 0;
+        interestPaid = totalInterest;
+        principalPaid = principal;
+    } else if (category === "interest_only") {
+        newOutstanding = principal;
+        interestPaid = repayAmount;
+        principalPaid = 0;
+    } else {
+        // interest_and_principal
+        interestPaid = Math.min(repayAmount, totalInterest);
+        principalPaid = repayAmount - interestPaid;
+        newOutstanding = Math.max(0, principal - principalPaid);
+    }
+    
     const status = newOutstanding <= 0.01 ? "paid" : "active";
     
     // Log details of this repayment
@@ -1414,7 +1561,9 @@ function submitRepayment(event) {
         amount: repayAmount,
         date,
         type: type === "full" ? "full" : (category === "interest_only" ? "interest_only" : "partial"),
-        note: finalNote
+        note: finalNote,
+        interestPaid: interestPaid,
+        principalPaid: principalPaid
     };
     
     // Clone previous payments list or create a new one
@@ -1426,6 +1575,11 @@ function submitRepayment(event) {
         status,
         payments: paymentsList
     };
+    
+    // Update the borrower's loan date to the repayment date so interest calculation restarts from this date
+    if (type !== "full") {
+        updates.date = date;
+    }
     
     db.ref(`borrowers/${key}`).update(updates)
         .then(() => {
@@ -1711,6 +1865,7 @@ function importDataFromCSV(event) {
                 currency: row[idxCurrency] || "USD",
                 interestRate: parseFloat(row[idxInterest]) || 5,
                 date: row[idxDate] || new Date().toISOString().split("T")[0],
+                originalDate: row[idxDate] || new Date().toISOString().split("T")[0],
                 hasCollateral: row[idxCollateralOption] || "គ្មាន",
                 collateral: row[idxCollateralDetail] || "",
                 status: row[idxStatus] || (clientAmount <= 0 ? "paid" : "active"),
